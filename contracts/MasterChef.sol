@@ -65,6 +65,8 @@ contract MasterChef is Ownable {
     uint256 public bonusEndBlock;
     // SUSHI tokens created per block.
     uint256 public rewawrdPerBlock;
+    // reserved reward tokens
+    uint256 public totalRewardsPending;
     // Bonus muliplier for early sushi makers.
     uint256 public constant BONUS_MULTIPLIER = 10;
     // The migrator contract. It has a lot of power. Can only be set through governance (owner).
@@ -230,15 +232,12 @@ contract MasterChef is Ownable {
 
         // original rewardToken (sushi) was infinite supply and can always be minted
         // So need to add check that if not enough rewards left in contract, shares don't update causing a bank run
-
-        if(rewardToken.balanceOf(address(this)) < reward) {
-          // no rewards left
+        if(rewardToken.balanceOf(address(this)) > totalRewardsPending + reward) {
           pool.accRewardPerShare = pool.accRewardPerShare.add(
               reward.mul(1e12).div(lpSupply)
           );
+          totalRewardsPending += reward
         }
-
-        // token balance  for governance handled in  deposit/withdraw
 
         pool.lastRewardBlock = block.number;
     }
@@ -301,8 +300,10 @@ contract MasterChef is Ownable {
         uint256 rewardBal = rewardToken.balanceOf(address(this));
         if (_amount > rewardBal) {
             rewardToken.transfer(_to, rewardBal);
+            totalRewardsPending -= rewardBal;
         } else {
             rewardToken.transfer(_to, _amount);
+            totalRewardsPending -= _amount;
         }
     }
 
