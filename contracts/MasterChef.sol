@@ -64,7 +64,7 @@ contract MasterChef is Ownable {
     // Block number when bonus SUSHI period ends.
     uint256 public bonusEndBlock;
     // SUSHI tokens created per block.
-    uint256 public rewawrdPerBlock;
+    uint256 public rewardPerBlock;
     // reserved reward tokens
     uint256 public totalRewardsPending;
     // Bonus muliplier for early sushi makers.
@@ -88,15 +88,15 @@ contract MasterChef is Ownable {
     );
 
     constructor(
-        SushiToken _sushi,
+        SubDaoToken _governance,
         address _devaddr,
-        uint256 _sushiPerBlock,
+        uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock
     ) public {
-        sushi = _sushi;
+        governanceToken = _governance;
         devaddr = _devaddr;
-        rewawrdPerBlock = _sushiPerBlock;
+        rewardPerBlock = _rewardPerBlock;
         bonusEndBlock = _bonusEndBlock;
         startBlock = _startBlock;
     }
@@ -128,7 +128,7 @@ contract MasterChef is Ownable {
         );
     }
 
-    // Update the given pool's SUSHI allocation point. Can only be called by the owner.
+    // Update the given pool's reward allocation point. Can only be called by the owner.
     function set(
         uint256 _pid,
         uint256 _allocPoint,
@@ -141,6 +141,14 @@ contract MasterChef is Ownable {
             _allocPoint
         );
         poolInfo[_pid].allocPoint = _allocPoint;
+    }
+
+    // update reward rate for all staking pool
+    function setRewardRate(uint256 _rewardPerBlock, bool _withUpdate) public onlyOwner {
+      if(_withUpdate) {
+        massUpdatePools();
+      }
+      rewardPerBlock = _rewardPerBlock;
     }
 
     // Set the migrator contract. Can only be called by the owner.
@@ -178,8 +186,8 @@ contract MasterChef is Ownable {
         }
     }
 
-    // View function to see pending SUSHIs on frontend.
-    function pendingSushi(uint256 _pid, address _user)
+    // View function to see pending rewards on frontend.
+    function pendingRewards(uint256 _pid, address _user)
         external
         view
         returns (uint256)
@@ -192,7 +200,7 @@ contract MasterChef is Ownable {
             uint256 multiplier =
                 getMultiplier(pool.lastRewardBlock, block.number);
             uint256 reward =
-                multiplier.mul(rewawrdPerBlock).mul(pool.allocPoint).div(
+                multiplier.mul(rewardPerBlock).mul(pool.allocPoint).div(
                     totalAllocPoint
                 );
             accRewardPerShare = accRewardPerShare.add(
@@ -223,7 +231,7 @@ contract MasterChef is Ownable {
         }
         uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
         uint256 reward =
-            multiplier.mul(rewawrdPerBlock).mul(pool.allocPoint).div(
+            multiplier.mul(rewardPerBlock).mul(pool.allocPoint).div(
                 totalAllocPoint
             );
 
@@ -242,7 +250,7 @@ contract MasterChef is Ownable {
         pool.lastRewardBlock = block.number;
     }
 
-    // Deposit LP tokens to MasterChef for SUSHI allocation.
+    // Deposit LP tokens to MasterChef for dataINDEX allocation.
     function deposit(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
@@ -295,7 +303,7 @@ contract MasterChef is Ownable {
         user.rewardDebt = 0;
     }
 
-    // Safe sushi transfer function, just in case if rounding error causes pool to not have enough SUSHIs.
+    // Safe transfer function, just in case if rounding error causes pool to not have enough rewards.
     function safeRewardTransfer(address _to, uint256 _amount) internal {
         uint256 rewardBal = rewardToken.balanceOf(address(this));
         if (_amount > rewardBal) {

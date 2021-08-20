@@ -1,0 +1,25 @@
+{
+  "name": "dataindex",
+  "version": "1.0.0",
+  "description": "MasterChef - change var name `sushi` to `data` - change `data` .mint to .transfer in setPoolInfo - remove `data` .mint to devaddr - add `subDAO` mint amnt to PoolInfo struct - add `subDAO` mint/burn when people enter/exit - remove all migrator functionality - add snapshot delegation to an address",
+  "main": "hardhat.config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kibagateaux/dataINDEX.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kibagateaux/dataINDEX/issues"
+  },
+  "homepage": "https://github.com/kibagateaux/dataINDEX#readme",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.0"
+  }
+}
