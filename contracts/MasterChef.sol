@@ -9,6 +9,10 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./SubDaoToken.sol";
 
+interface DelegateRegistry {
+   function setDelegate(bytes32 id, address delegate) external;
+}
+
 // interface IMigratorChef {
 //     // Perform LP token migration from legacy UniswapV2 to SushiSwap.
 //     // Take the current LP token address and return the new LP token address.
@@ -79,6 +83,9 @@ contract MasterChef is Ownable {
     uint256 public totalAllocPoint = 0;
     // The block number when SUSHI mining starts.
     uint256 public startBlock;
+    // Snapshot onchain vote registry to delegate metagov power
+    DelegateRegistry private constant snapshot = DelegateRegistry(0x469788fE6E9E9681C6ebF3bF78e7Fd26Fc015446);
+
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(
@@ -314,10 +321,8 @@ contract MasterChef is Ownable {
         }
     }
 
-    // Update dev address by the previous dev.
-    function dev(address _devaddr) public {
-        require(msg.sender == devaddr, "dev: wut?");
-        devaddr = _devaddr;
+    function delegateStakedTokens(string memory space, address _to) external onlyOwner {
+      snapshot.setDelegate(keccak256(abi.encodePacked(space)), _to);
     }
 
     function setPauseStatus(bool _isPaused) external onlyOwner {
