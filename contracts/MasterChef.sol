@@ -98,12 +98,14 @@ contract MasterChef is Ownable {
         SubDaoToken _governance,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
-        uint256 _bonusEndBlock
+        uint256 _bonusEndBlock,
+        bool _isPaused
     ) public {
         governanceToken = _governance;
         rewardPerBlock = _rewardPerBlock;
         bonusEndBlock = _bonusEndBlock;
         startBlock = _startBlock;
+        isPaused = _isPaused;
     }
 
     function poolLength() external view returns (uint256) {
@@ -296,7 +298,7 @@ contract MasterChef is Ownable {
         pool.lpToken.safeTransfer(address(msg.sender), _amount);
         emit Withdraw(msg.sender, _pid, _amount);
 
-        governanceToken.burnFrom(msg.sender, pool.allocPoint * 1e18 * _amount);
+        governanceToken.burn(msg.sender, pool.allocPoint * 1e18 * _amount);
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.

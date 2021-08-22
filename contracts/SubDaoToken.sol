@@ -10,13 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // it's NOT recommmended to use this in production.  
 
 // Token with Governance.
-contract SubDaoToken is ERC20("Data Economy Index DAO", "dataINDEX"), ERC20Burnable, Ownable {
-    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (MasterChef).
-    function mint(address _to, uint256 _amount) public onlyOwner {
-        _mint(_to, _amount);
-        _moveDelegates(address(0), _delegates[_to], _amount);
-    }
-
+contract SubDaoToken is ERC20("Data Economy Index DAO", "dataINDEX"), Ownable {
     // Copied and modified from YAM code:
     // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernanceStorage.sol
     // https://github.com/yam-finance/yam-protocol/blob/master/contracts/token/YAMGovernance.sol
@@ -52,6 +46,19 @@ contract SubDaoToken is ERC20("Data Economy Index DAO", "dataINDEX"), ERC20Burna
 
     /// @notice An event thats emitted when a delegate account's vote balance changes
     event DelegateVotesChanged(address indexed delegate, uint previousBalance, uint newBalance);
+
+    /// @notice Creates `_amount` token to `_to`. Can only be called by the owner (MasterChef).
+    function mint(address _to, uint256 _amount) public onlyOwner {
+        _mint(_to, _amount);
+        _moveDelegates(address(0), _delegates[_to], _amount);
+    }
+
+     /// @notice Destroys `_amount` token for `_to`. Can only be called by the owner (MasterChef).
+    function burn(address _to, uint256 _amount) public onlyOwner {
+        _burn(_to, _amount);
+        _moveDelegates(_delegates[_to], address(0), _amount);
+    }
+
 
     /**
      * @notice Delegate votes from `msg.sender` to `delegatee`
