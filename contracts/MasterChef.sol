@@ -55,12 +55,12 @@ contract MasterChef is Ownable {
         uint256 lastRewardBlock; // Last block number that SUSHIs distribution occurs.
         uint256 accRewardPerShare; // Accumulated SUSHIs per share, times 1e12. See below.
     }
+    // allows owner to pause withdraws
+    bool public isPaused;
     // Governance token earned for staking to DAO
     SubDaoToken public governanceToken;
     // Token stakers receive per block
     IERC20 public rewardToken;
-    // Dev address.
-    address public devaddr;
     // Block number when bonus SUSHI period ends.
     uint256 public bonusEndBlock;
     // SUSHI tokens created per block.
@@ -89,13 +89,11 @@ contract MasterChef is Ownable {
 
     constructor(
         SubDaoToken _governance,
-        address _devaddr,
         uint256 _rewardPerBlock,
         uint256 _startBlock,
         uint256 _bonusEndBlock
     ) public {
         governanceToken = _governance;
-        devaddr = _devaddr;
         rewardPerBlock = _rewardPerBlock;
         bonusEndBlock = _bonusEndBlock;
         startBlock = _startBlock;
@@ -244,7 +242,7 @@ contract MasterChef is Ownable {
           pool.accRewardPerShare = pool.accRewardPerShare.add(
               reward.mul(1e12).div(lpSupply)
           );
-          totalRewardsPending += reward
+          totalRewardsPending += reward;
         }
 
         pool.lastRewardBlock = block.number;
@@ -271,11 +269,12 @@ contract MasterChef is Ownable {
         user.rewardDebt = user.amount.mul(pool.accRewardPerShare).div(1e12);
         emit Deposit(msg.sender, _pid, _amount);
 
-        governanceToken.mint(msg.sender, pool.allocPoint * 1e18);
+        governanceToken.mint(msg.sender, pool.allocPoint * 1e18 * _amount);
     }
 
     // Withdraw LP tokens from MasterChef.
     function withdraw(uint256 _pid, uint256 _amount) public {
+        require(!isPaused, "withdrawals paused");
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -290,7 +289,7 @@ contract MasterChef is Ownable {
         pool.lpToken.safeTransfer(address(msg.sender), _amount);
         emit Withdraw(msg.sender, _pid, _amount);
 
-        governanceToken.burnFrom(msg.sender, pool.allocPoint * 1e18);
+        governanceToken.burnFrom(msg.sender, pool.allocPoint * 1e18 * _amount);
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -320,4 +319,14 @@ contract MasterChef is Ownable {
         require(msg.sender == devaddr, "dev: wut?");
         devaddr = _devaddr;
     }
+
+    function setPauseStatus(bool _isPaused) external onlyOwner {
+      isPaused = _isPaused;
+    }
+
+    // Update dev address by the previous dev.
+    // function dev(address _devaddr) public {
+    //     require(msg.sender == devaddr, "dev: wut?");
+    //     devaddr = _devaddr;
+    // }
 }
